@@ -62,7 +62,7 @@ impl Parse for AllTuples {
 ///
 /// ```
 /// # use core::marker::PhantomData;
-/// # use bevy_utils_proc_macros::all_tuples;
+/// # use variadics_please::all_tuples;
 /// #
 /// struct Foo<T> {
 ///     // ..
@@ -92,7 +92,7 @@ impl Parse for AllTuples {
 /// # Multiple parameters
 ///
 /// ```
-/// # use bevy_utils_proc_macros::all_tuples;
+/// # use variadics_please::all_tuples;
 /// #
 /// trait Append {
 ///     type Out<Item>;
@@ -144,7 +144,7 @@ impl Parse for AllTuples {
 /// ```
 ///
 /// ```
-/// # use bevy_utils_proc_macros::all_tuples;
+/// # use variadics_please::all_tuples;
 /// #
 /// trait Variadic {}
 ///
@@ -202,7 +202,7 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// # use core::marker::PhantomData;
-/// # use bevy_utils_proc_macros::all_tuples_with_size;
+/// # use variadics_please::all_tuples_with_size;
 /// #
 /// struct Foo<T> {
 ///     // ..
@@ -234,7 +234,7 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
 /// ## Multiple parameters
 ///
 /// ```
-/// # use bevy_utils_proc_macros::all_tuples_with_size;
+/// # use variadics_please::all_tuples_with_size;
 /// #
 /// trait Append {
 ///     type Out<Item>;
@@ -286,7 +286,7 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
 /// ```
 ///
 /// ```
-/// # use bevy_utils_proc_macros::all_tuples_with_size;
+/// # use variadics_please::all_tuples_with_size;
 /// #
 /// trait Variadic {}
 ///
