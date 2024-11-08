@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 MD041 -->
 <div class="rustdoc-hidden">
 
 # `variadics_please`
