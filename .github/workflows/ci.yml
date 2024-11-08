@@ -244,22 +244,16 @@ jobs:
       - name: Build
         # this uses the same command as when running the example to ensure build is reused
         run: |
-          TRACE_CHROME=trace-all_tuples.json CI_TESTING_CONFIG=.github/example-run/all_tuples.ron cargo build --example all_tuples
+          CI_TESTING_CONFIG=.github/example-run/all_tuples.ron cargo build --example all_tuples
       - name: Run examples
         run: |
           for example in .github/example-run/*.ron; do
             example_name=`basename $example .ron`
             echo -n $example_name > last_example_run
             echo "running $example_name - "`date`
-            time TRACE_CHROME=trace-$example_name.json CI_TESTING_CONFIG=$example cargo run --example $example_name
+            time CI_TESTING_CONFIG=$example cargo run --example $example_name
             sleep 10
           done
-          mkdir traces && mv trace*.json traces/
-      - name: Save traces
-        uses: actions/upload-artifact@v4
-        with:
-          name: example-traces-macos
-          path: traces
       - name: Save PR number
         if: ${{ github.event_name == 'pull_request' }}
         run: |
