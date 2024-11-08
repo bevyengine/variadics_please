@@ -32,7 +32,6 @@ exclude = [
 ]
 members = [
   "errors",
-  "tools/compile_fail_utils"
 ]
 
 [workspace.lints.clippy]
