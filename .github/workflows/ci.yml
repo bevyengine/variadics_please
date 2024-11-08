@@ -241,9 +241,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Disable audio
-        # Disable audio through a patch. on github m1 runners, audio timeouts after 15 minutes
-        run: git apply --ignore-whitespace tools/example-showcase/disable-audio.patch
       - name: Build
         # this uses the same command as when running the example to ensure build is reused
         run: |
