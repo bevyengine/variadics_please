@@ -50,10 +50,10 @@ fn basic_config(root_dir: impl Into<PathBuf>, args: &Args) -> ui_test::Result<Co
 
     config.with_args(args);
 
-    let bevy_root = "..";
+    let crate_root = "..";
 
     // Don't leak contributor filesystem paths
-    config.path_stderr_filter(Path::new(bevy_root), b"$BEVY_ROOT");
+    config.path_stderr_filter(Path::new(crate_root), b"$CRATE_ROOT");
     config.path_stderr_filter(Path::new(env!("RUSTUP_HOME")), b"$RUSTUP_HOME");
 
     // ui_test doesn't compile regex with perl character classes.

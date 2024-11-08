@@ -1,6 +1,6 @@
-# Bevy Benchmarks
+# Benchmarks
 
-This is a crate with a collection of benchmarks, separate from the rest of the Bevy crates.
+This is a crate with a collection of benchmarks, separate from the rest of the crates.
 
 ## Running the benchmarks
 
