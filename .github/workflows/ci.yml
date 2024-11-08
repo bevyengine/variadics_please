@@ -303,7 +303,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.toml') }}
-      - name: get MSRV
+      - name: Get minimum supported rust version
         id: msrv
         run: |
           msrv=`cargo metadata --no-deps --format-version 1 | jq --raw-output '.packages[] | select(.name=="variadics_please") | .rust_version'`
@@ -313,7 +313,9 @@ jobs:
           toolchain: ${{ steps.msrv.outputs.msrv }}
       - name: Run cargo check
         id: check
-        run: cargo check
+        run: |
+          echo 'If this fails, run `cargo msrv` and update the msrv in `Cargo.toml`.'
+          cargo check
       - name: Save PR number
         if: ${{ failure() && github.event_name == 'pull_request' && steps.check.conclusion == 'failure' }}
         run: |

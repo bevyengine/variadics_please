@@ -7,7 +7,7 @@ homepage = "https://github.com/bevyengine/variadics_please"
 repository = "https://github.com/bevyengine/variadics_please"
 license = "MIT OR Apache-2.0"
 keywords = ["bevy", "variadics", "docs"]
-rust-version = "1.65.0"
+rust-version = "1.81.0"
 categories = ["macros", "utilities"]
 exclude = ["tools/", ".github/"]
 documentation = "https://docs.rs/variadics_please"
@@ -26,7 +26,7 @@ proc-macro2 = "1.0"
 
 [workspace]
 exclude = ["benches", "compile_fail", "tools/compile_fail_utils"]
-members = ["errors"]
+members = ["errors", ".", "benches"]
 
 [workspace.lints.clippy]
 doc_markdown = "warn"
@@ -59,7 +59,6 @@ unused_qualifications = "warn"
 name = "all_tuples"
 path = "examples/demonstrations/all_tuples.rs"
 doc-scrape-examples = true
-wasm = true
 
 [package.metadata.example.all_tuples]
 name = "all_tuples"
