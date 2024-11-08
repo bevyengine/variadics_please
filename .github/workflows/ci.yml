@@ -84,7 +84,7 @@ jobs:
           toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
           components: miri
       - name: CI job
-        run: cargo miri test -p variadics_please
+        run: cargo miri test
         env:
           RUSTFLAGS: -Zrandomize-layout
 

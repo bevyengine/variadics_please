@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["bevy", "variadics", "docs"]
 rust-version = "1.65.0"
 categories = ["macros", "utilities"]
-exclude = ["tools/", ".github/", "variadics_please/"]
+exclude = ["tools/", ".github/"]
 documentation = "https://docs.rs/variadics_please"
 
 [features]
