@@ -25,14 +25,8 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 [workspace]
-exclude = [
-  "benches",
-  "compile_fail",
-  "tools/compile_fail_utils",
-]
-members = [
-  "errors",
-]
+exclude = ["benches", "compile_fail", "tools/compile_fail_utils"]
+members = ["errors"]
 
 [workspace.lints.clippy]
 doc_markdown = "warn"

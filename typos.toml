@@ -1,8 +1,8 @@
 [files]
 extend-exclude = [
-  "*.patch",   # Automatically generated files that should not be manually modified.
-  "*.bin",     # Binary files
-  ".git/",     # Version control files
+  "*.patch", # Automatically generated files that should not be manually modified.
+  "*.bin",   # Binary files
+  ".git/",   # Version control files
 ]
 ignore-hidden = false
 
@@ -19,5 +19,4 @@ ignore-hidden = false
 
 [default]
 locale = "en-us"
-extend-ignore-identifiers-re = [
-]
+extend-ignore-identifiers-re = []
