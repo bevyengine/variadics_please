@@ -59,6 +59,7 @@ unused_qualifications = "warn"
 name = "all_tuples"
 path = "examples/demonstrations/all_tuples.rs"
 doc-scrape-examples = true
+wasm = true
 
 [package.metadata.example.all_tuples]
 name = "all_tuples"
