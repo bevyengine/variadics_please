@@ -1,5 +1,3 @@
-// FIXME(15321): solve CI failures, then replace with `#![expect()]`.
-#![allow(missing_docs, reason = "Not all docs are written yet, see #3492.")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 use proc_macro::TokenStream;
@@ -12,6 +10,7 @@ use syn::{
     token::Comma,
     Attribute, Error, Ident, LitInt, LitStr, Result,
 };
+
 struct AllTuples {
     fake_variadic: bool,
     macro_ident: Ident,
