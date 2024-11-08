@@ -9,9 +9,6 @@ pub trait Foo {
 
 macro_rules! impl_tuple_foo {
     ($(#[$meta:meta])* $($name: ident),*) => {
-        #[allow(unused_variables)]
-        #[allow(non_snake_case)]
-        #[allow(clippy::unused_unit)]
         $(#[$meta])*
         impl<$($name: Foo),*> Foo for ($($name,)*) {
             const FOO_HARDER: bool = true $(&& $name::FOO_HARDER)*;
