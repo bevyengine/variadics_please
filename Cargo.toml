@@ -52,3 +52,15 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "warn"
 unused_qualifications = "warn"
+
+# Examples
+
+[[example]]
+name = "all_tuples"
+path = "examples/demonstrations/all_tuples.rs"
+doc-scrape-examples = true
+
+[package.metadata.example.all_tuples]
+name = "all_tuples"
+description = "Demonstrates the functionality of `all_tuples!`."
+category = "Demonstration"
