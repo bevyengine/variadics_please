@@ -53,7 +53,7 @@ impl Parse for AllTuples {
 
 /// Helper macro to generate tuple pyramids. Useful to generate scaffolding to work around Rust
 /// lacking variadics. Invoking `all_tuples!(impl_foo, start, end, P, Q, ..)`
-/// invokes `impl_foo` providing ident tuples through arity `start..=end`.
+/// invokes `impl_foo` providing ident tuples through arity `start..end`.
 /// If you require the length of the tuple, see [`all_tuples_with_size!`].
 ///
 /// # Examples
@@ -268,7 +268,7 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
 
 /// Helper macro to generate tuple pyramids with their length. Useful to generate scaffolding to
 /// work around Rust lacking variadics. Invoking `all_tuples_with_size!(impl_foo, start, end, P, Q, ..)`
-/// invokes `impl_foo` providing ident tuples through arity `start..=end` preceded by their length.
+/// invokes `impl_foo` providing ident tuples through arity `start..end` preceded by their length.
 /// If you don't require the length of the tuple, see [`all_tuples!`].
 ///
 /// # Examples
