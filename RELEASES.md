@@ -1,5 +1,9 @@
 # `variadics_please` Release Notes
 
+## Version 1.1
+
+- added `all_tuples_enumerated`, which provides the index of each item in the tuple
+
 ## Version 1.0.0
 
 - initial release
