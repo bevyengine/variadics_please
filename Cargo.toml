@@ -8,7 +8,7 @@ repository = "https://github.com/bevyengine/variadics_please"
 license = "MIT OR Apache-2.0"
 keywords = ["bevy", "variadics", "docs"]
 rust-version = "1.81.0"
-categories = ["macros", "utilities"]
+categories = ["rust-patterns"]
 exclude = ["tools/", ".github/"]
 documentation = "https://docs.rs/variadics_please"
 
