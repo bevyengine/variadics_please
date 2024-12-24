@@ -1,6 +1,8 @@
+//! A basic example of a compilation failure test.
+//! Use this as a template or for help with syntax.
+
 // Compiler warnings also need to be annotated.
-// We don't want to annotate all the unused variables, so let's instruct the compiler to ignore them.
-#![allow(unused_variables)]
+#![allow(unused_variables, reason = "The variables are for basic demonstration purposes and don't need to be used.")]
 
 fn bad_moves() {
     let x = String::new();
