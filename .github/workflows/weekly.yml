@@ -59,7 +59,7 @@ jobs:
           toolchain: stable
       - name: Check Compile
         run: |
-          cargo test --target-dir ../../../target
+          cargo test --workspace
           cargo check --benches --target-dir ../target --manifest-path ./benches/Cargo.toml
           cargo check --workspace --examples
           cargo check --workspace
@@ -72,7 +72,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@beta
       - name: Build and check docs
-        run: cargo run -p ci -- doc
+        run: |
+          cargo test --workspace --doc --no-fail-fast
+          cargo doc --workspace --all-features --no-deps --document-private-items --keep-going
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 --cfg docsrs_dep"

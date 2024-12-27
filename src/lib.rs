@@ -1,6 +1,8 @@
+//! Provides macros for implementing traits on variadic types.
+
 // FIXME(15321): solve CI failures, then replace with `#![expect()]`.
 #![allow(missing_docs, reason = "Not all docs are written yet, see #3492.")]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(any(docsrs, docsrs_dep), feature(doc_auto_cfg, rustdoc_internals))]
 
 use proc_macro::TokenStream;
 use proc_macro2::{Literal, Span as Span2, TokenStream as TokenStream2};
