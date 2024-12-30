@@ -52,6 +52,29 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "warn"
 unused_qualifications = "warn"
+internal_features = { level = "allow" }
+
+[lints.rust]
+missing_docs = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
+unsafe_code = "deny"
+unsafe_op_in_unsafe_fn = "warn"
+unused_qualifications = "warn"
+internal_features = { level = "allow" }
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[package.metadata.docs.rs]
+# This cfg is needed so that #[doc(fake_variadic)] is correctly propagated for
+# impls for re-exported traits. See https://github.com/rust-lang/cargo/issues/8811
+# for details on why this is needed. Since dependencies don't expect to be built
+# with `--cfg docsrs` (and thus fail to compile), we use a different cfg.
+rustc-args = ["--cfg", "docsrs_dep"]
+rustdoc-args = ["-Zunstable-options", "--generate-link-to-definition"]
+all-features = true
+cargo-args = ["-Zunstable-options", "-Zrustdoc-scrape-examples"]
 
 # Examples
 

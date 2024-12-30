@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/crates/d/variadics_please.svg)](https://crates.io/crates/variadics_please)
 [![Docs](https://docs.rs/variadics_please/badge.svg)](https://docs.rs/variadics_please/latest/variadics_please/)
 
-Provides a macro for implementing traits on variadic types.
+Provides macros for implementing traits on variadic types.
 
 ## Contributing
 

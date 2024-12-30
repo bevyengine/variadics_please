@@ -108,7 +108,7 @@ jobs:
           toolchain: stable
       - name: Check Compile
         run: |
-          cargo test --target-dir ../../../target
+          cargo test --workspace
           cargo check --benches --target-dir ../target --manifest-path ./benches/Cargo.toml
           cargo check --workspace --examples
           cargo check --workspace
