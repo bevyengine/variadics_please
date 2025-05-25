@@ -30,9 +30,9 @@ enum AllTuplesParam {
 impl Parse for AllTuplesParam {
     fn parse(input: ParseStream) -> Result<Self> {
         if let Ok(lifetime) = input.parse::<Lifetime>() {
-            return Ok(Self::Lifetime(lifetime));
+            Ok(Self::Lifetime(lifetime))
         } else {
-            return Ok(Self::Ident(input.parse()?));
+            Ok(Self::Ident(input.parse()?))
         }
     }
 }
