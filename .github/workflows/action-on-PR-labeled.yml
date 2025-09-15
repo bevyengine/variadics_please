@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.label.name == 'M-Needs-Migration-Guide' && !contains(github.event.pull_request.body, '## Migration Guide')
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           script: |
             await github.rest.issues.createComment({
