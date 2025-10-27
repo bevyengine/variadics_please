@@ -321,7 +321,7 @@ jobs:
         run: |
           mkdir -p ./msrv
           echo ${{ github.event.number }} > ./msrv/NR
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: ${{ failure() && github.event_name == 'pull_request' && steps.check.conclusion == 'failure' }}
         with:
           name: msrv
