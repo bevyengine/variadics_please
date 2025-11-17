@@ -6,20 +6,43 @@
 
 use proc_macro::TokenStream;
 use proc_macro2::{Literal, Span as Span2, TokenStream as TokenStream2};
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
     spanned::Spanned as _,
     token::Comma,
-    Attribute, Error, Ident, LitInt, LitStr, Result,
+    Attribute, Error, Ident, Lifetime, LitInt, LitStr, Result,
 };
 struct AllTuples {
     fake_variadic: bool,
     macro_ident: Ident,
     start: usize,
     end: usize,
-    idents: Vec<Ident>,
+    idents: Vec<AllTuplesParam>,
+}
+
+#[derive(Clone)]
+enum AllTuplesParam {
+    Ident(Ident),
+    Lifetime(Lifetime),
+}
+impl Parse for AllTuplesParam {
+    fn parse(input: ParseStream) -> Result<Self> {
+        if let Ok(lifetime) = input.parse::<Lifetime>() {
+            Ok(Self::Lifetime(lifetime))
+        } else {
+            Ok(Self::Ident(input.parse()?))
+        }
+    }
+}
+impl ToTokens for AllTuplesParam {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        match self {
+            AllTuplesParam::Ident(ident) => ident.to_tokens(tokens),
+            AllTuplesParam::Lifetime(lifetime) => lifetime.to_tokens(tokens),
+        }
+    }
 }
 
 impl Parse for AllTuples {
@@ -31,9 +54,9 @@ impl Parse for AllTuples {
         input.parse::<Comma>()?;
         let end = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
-        let mut idents = vec![input.parse::<Ident>()?];
+        let mut idents = vec![input.parse::<AllTuplesParam>()?];
         while input.parse::<Comma>().is_ok() {
-            idents.push(input.parse::<Ident>()?);
+            idents.push(input.parse::<AllTuplesParam>()?);
         }
 
         if start > 1 && fake_variadic {
@@ -167,10 +190,15 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
     let len = 1 + input.end - input.start;
     let ident_tuples = (0..=len)
         .map(|i| {
-            let idents = input
-                .idents
-                .iter()
-                .map(|ident| format_ident!("{}{}", ident, i));
+            let idents = input.idents.iter().map(|ident| match ident {
+                AllTuplesParam::Ident(ident) => {
+                    AllTuplesParam::Ident(format_ident!("{}{}", ident, i))
+                }
+                AllTuplesParam::Lifetime(lifetime) => AllTuplesParam::Lifetime(Lifetime {
+                    apostrophe: lifetime.apostrophe,
+                    ident: format_ident!("{}{}", lifetime.ident, i),
+                }),
+            });
             to_ident_tuple(idents, input.idents.len())
         })
         .collect::<Vec<_>>();
@@ -242,11 +270,16 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
     let len = 1 + input.end - input.start;
     let ident_tuples = (0..=len)
         .map(|i| {
-            let idents = input
-                .idents
-                .iter()
-                .map(|ident| format_ident!("{}{}", ident, i));
-            to_ident_tuple_enumerated(idents, input.idents.len())
+            let idents = input.idents.iter().map(|ident| match ident {
+                AllTuplesParam::Ident(ident) => {
+                    AllTuplesParam::Ident(format_ident!("{}{}", ident, i))
+                }
+                AllTuplesParam::Lifetime(lifetime) => AllTuplesParam::Lifetime(Lifetime {
+                    apostrophe: lifetime.apostrophe,
+                    ident: format_ident!("{}{}", lifetime.ident, i),
+                }),
+            });
+            to_ident_tuple_enumerated(idents, i)
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
@@ -384,10 +417,15 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
     let len = 1 + input.end - input.start;
     let ident_tuples = (0..=len)
         .map(|i| {
-            let idents = input
-                .idents
-                .iter()
-                .map(|ident| format_ident!("{}{}", ident, i));
+            let idents = input.idents.iter().map(|ident| match ident {
+                AllTuplesParam::Ident(ident) => {
+                    AllTuplesParam::Ident(format_ident!("{}{}", ident, i))
+                }
+                AllTuplesParam::Lifetime(lifetime) => AllTuplesParam::Lifetime(Lifetime {
+                    apostrophe: lifetime.apostrophe,
+                    ident: format_ident!("{}{}", lifetime.ident, i),
+                }),
+            });
             to_ident_tuple(idents, input.idents.len())
         })
         .collect::<Vec<_>>();
@@ -464,7 +502,7 @@ fn choose_ident_tuples_enumerated(
     }
 }
 
-fn to_ident_tuple(idents: impl Iterator<Item = Ident>, len: usize) -> TokenStream2 {
+fn to_ident_tuple(idents: impl Iterator<Item = AllTuplesParam>, len: usize) -> TokenStream2 {
     if len < 2 {
         quote! { #(#idents)* }
     } else {
@@ -473,7 +511,10 @@ fn to_ident_tuple(idents: impl Iterator<Item = Ident>, len: usize) -> TokenStrea
 }
 
 /// Like `to_ident_tuple`, but it enumerates the identifiers
-fn to_ident_tuple_enumerated(idents: impl Iterator<Item = Ident>, idx: usize) -> TokenStream2 {
+fn to_ident_tuple_enumerated(
+    idents: impl Iterator<Item = AllTuplesParam>,
+    idx: usize,
+) -> TokenStream2 {
     let idx = Literal::usize_unsuffixed(idx);
     quote! { (#idx, #(#idents),*) }
 }
