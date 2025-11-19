@@ -229,6 +229,11 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
 /// // impl_squawk!((0, T0), (1, T1));
 /// // ..
 /// // impl_squawk!((0, T0) .. (14, T14));
+///
+/// all_tuples_enumerated!(impl_squawk, 16, 20, T);
+/// // impl_append!((0, T0) .. (15, T15));
+/// // ..
+/// // impl_append!((0, T0) .. (19, T19));
 /// ```
 ///
 /// With multiple parameters, the result is similar, but with the additional parameters
@@ -239,6 +244,11 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
 /// // impl_squawk!((0, P0, p0), (1, P1, p1));
 /// // ..
 /// // impl_squawk!((0, P0, p0) .. (14, P14, p14));
+///
+/// all_tuples_enumerated!(impl_append, 16, 20, P, p);
+/// // impl_append!((0, P0, p0) .. (15, P15, p15));
+/// // ..
+/// // impl_append!((0, P0, p0) .. (19, P19, p19));
 /// ```
 #[proc_macro]
 pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
