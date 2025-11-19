@@ -315,6 +315,11 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
 /// // impl_wrapped_in_foo!(2, T0, T1);
 /// // ..
 /// // impl_wrapped_in_foo!(15, T0 .. T14);
+///
+/// all_tuples_with_size!(impl_wrapped_in_foo, 16, 20, T);
+/// // impl_wrapped_in_foo!(16, T0 .. T15);
+/// // ..
+/// // impl_wrapped_in_foo!(20, T0 .. T19);
 /// ```
 ///
 /// ## Multiple parameters
@@ -351,6 +356,11 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
 /// // impl_append!(3, (P0, p0), (P1, p1), (P2, p2));
 /// // ..
 /// // impl_append!(15, (P0, p0) .. (P14, p14));
+///
+/// all_tuples_with_size!(impl_append, 16, 20, P, p);
+/// // impl_append!(16, (P0, p0) .. (P15, p15));
+/// // ..
+/// // impl_append!(20, (P0, p0) .. (P19, p19));
 /// ```
 ///
 /// **`#[doc(fake_variadic)]`**
@@ -390,8 +400,7 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as AllTuples);
-    let len = 1 + input.end - input.start;
-    let ident_tuples = (0..=len)
+    let ident_tuples = (0..input.end)
         .map(|i| {
             let idents = input
                 .idents
