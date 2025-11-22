@@ -1,5 +1,7 @@
 //! An example of using `all_tuples!`
 
+#![cfg_attr(any(docsrs), feature(rustdoc_internals))]
+
 use variadics_please::all_tuples;
 
 fn main() {}
