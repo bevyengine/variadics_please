@@ -150,7 +150,6 @@ impl Parse for AllTuples {
 ///
 /// ```
 /// // `rustdoc_internals` is needed for `#[doc(fake_variadics)]`
-/// #![allow(internal_features)]
 /// #![cfg_attr(any(docsrs, docsrs_dep), feature(rustdoc_internals))]
 /// ```
 ///
@@ -377,7 +376,6 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
 ///
 /// ```
 /// // `rustdoc_internals` is needed for `#[doc(fake_variadics)]`
-/// #![allow(internal_features)]
 /// #![cfg_attr(any(docsrs, docsrs_dep), feature(rustdoc_internals))]
 /// ```
 ///
