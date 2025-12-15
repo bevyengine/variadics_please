@@ -78,7 +78,7 @@ jobs:
             time CI_TESTING_CONFIG=$example cargo run --example $example_name
             sleep 10
           done
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ failure() && github.event_name == 'pull_request' }}
         with:
           name: example-run-linux
@@ -106,7 +106,7 @@ jobs:
             time CI_TESTING_CONFIG=$example cargo run --example $example_name
             sleep 10
           done
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: ${{ failure() && github.event_name == 'pull_request' }}
         with:
           name: example-run-windows
@@ -164,7 +164,7 @@ jobs:
           xvfb-run cargo run -p build-wasm-example -- --browsers chromium --browsers firefox --frames 25 --test 2d_shapes lighting text_debug breakout
 
       - name: Save screenshots
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: screenshots-wasm
           path: .github/start-wasm-example/screenshot-*.png
