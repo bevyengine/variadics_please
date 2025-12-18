@@ -28,14 +28,6 @@ impl Parse for AllTuples {
         let macro_ident = input.parse::<Ident>()?;
         input.parse::<Comma>()?;
         let start = input.parse::<LitInt>()?.base10_parse()?;
-
-        if start > 1 && fake_variadic {
-            return Err(Error::new(
-                input.span(),
-                "#[doc(fake_variadic)] only works when the tuple with length one is included",
-            ));
-        }
-
         input.parse::<Comma>()?;
         let end = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
@@ -453,7 +445,7 @@ fn choose_ident_tuples(input: &AllTuples, ident_tuples: &[TokenStream2], n: usiz
     // idents with subscript numbers e.g. (F₁, F₂, …, Fₙ).
     // We don't want two numbers, so we use the
     // original, unnumbered idents for this case.
-    if input.fake_variadic && n == 1 {
+    if input.fake_variadic && n == input.start.max(1) {
         let ident_tuple = to_ident_tuple(input.idents.iter().cloned(), input.idents.len());
         quote! { #ident_tuple }
     } else {
@@ -467,7 +459,7 @@ fn choose_ident_tuples_enumerated(
     ident_tuples: &[TokenStream2],
     n: usize,
 ) -> TokenStream2 {
-    if input.fake_variadic && n == 1 {
+    if input.fake_variadic && n == input.start.max(1) {
         let ident_tuple = to_ident_tuple_enumerated(input.idents.iter().cloned(), 0);
         quote! { #ident_tuple }
     } else {
@@ -476,8 +468,8 @@ fn choose_ident_tuples_enumerated(
     }
 }
 
-fn to_ident_tuple(idents: impl Iterator<Item = Ident>, len: usize) -> TokenStream2 {
-    if len < 2 {
+fn to_ident_tuple(idents: impl Iterator<Item = Ident>, generia_num: usize) -> TokenStream2 {
+    if generia_num < 2 {
         quote! { #(#idents)* }
     } else {
         quote! { (#(#idents),*) }
@@ -502,11 +494,16 @@ fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
         n => {
             let cfg = quote! { any(docsrs, docsrs_dep) };
             // The `#[doc(fake_variadic)]` attr has to be on the first impl block.
-            if n == 1 {
+            if n == input.start.max(1) {
                 let doc = LitStr::new(
                     &format!(
-                        "This trait is implemented for tuples down to {} up to {} items long.",
-                        input.start, input.end
+                        "This trait is implemented for tuples **{down}up to {up}** items long.",
+                        down = if input.start != 0 {
+                            format!("down to {} ", input.start)
+                        } else {
+                            "".to_string()
+                        },
+                        up = input.end
                     ),
                     Span2::call_site(),
                 );
