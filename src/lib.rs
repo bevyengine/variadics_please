@@ -29,8 +29,14 @@ impl Parse for AllTuples {
         input.parse::<Comma>()?;
         let start = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
+        let end_span = input.span();
         let end = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
+
+        if end < start {
+            return Err(Error::new(end_span, "`start` should <= `end`"));
+        }
+
         let mut idents = vec![input.parse::<Ident>()?];
         while input.parse::<Comma>().is_ok() {
             idents.push(input.parse::<Ident>()?);
@@ -174,13 +180,20 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            // chain n = 1
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -254,13 +267,19 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples_enumerated(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples_enumerated(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -400,13 +419,19 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#n, #attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#n, #attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -445,7 +470,7 @@ fn choose_ident_tuples(input: &AllTuples, ident_tuples: &[TokenStream2], n: usiz
     // idents with subscript numbers e.g. (F₁, F₂, …, Fₙ).
     // We don't want two numbers, so we use the
     // original, unnumbered idents for this case.
-    if input.fake_variadic && n == input.start.max(1) {
+    if input.fake_variadic && n == 1 {
         let ident_tuple = to_ident_tuple(input.idents.iter().cloned(), input.idents.len());
         quote! { #ident_tuple }
     } else {
@@ -459,7 +484,7 @@ fn choose_ident_tuples_enumerated(
     ident_tuples: &[TokenStream2],
     n: usize,
 ) -> TokenStream2 {
-    if input.fake_variadic && n == input.start.max(1) {
+    if input.fake_variadic && n == 1 {
         let ident_tuple = to_ident_tuple_enumerated(input.idents.iter().cloned(), 0);
         quote! { #ident_tuple }
     } else {
@@ -494,22 +519,46 @@ fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
         n => {
             let cfg = quote! { any(docsrs, docsrs_dep) };
             // The `#[doc(fake_variadic)]` attr has to be on the first impl block.
-            if n == input.start.max(1) {
+            if n == 1 {
                 let doc = LitStr::new(
                     &format!(
-                        "This trait is implemented for tuples **{down}up to {up}** items long.",
-                        down = if input.start != 0 {
-                            format!("down to {} ", input.start)
+                        "This trait is implemented for tuple{s1} {range} item{s2} long.",
+                        range = if input.start == input.end {
+                            format!("exactly {}", input.start)
                         } else {
-                            "".to_string()
+                            format!(
+                                "{down}up to {up}",
+                                down = if input.start != 0 {
+                                    format!("down to {} ", input.start)
+                                } else {
+                                    "".to_string()
+                                },
+                                up = input.end
+                            )
                         },
-                        up = input.end
+                        s1 = if input.end > input.start { "s" } else { "" },
+                        s2 = if input.end >= input.start && input.end > 1 {
+                            "s"
+                        } else {
+                            ""
+                        }
                     ),
                     Span2::call_site(),
                 );
-                quote! {
-                    #[cfg_attr(#cfg, doc(fake_variadic))]
-                    #[cfg_attr(#cfg, doc = #doc)]
+                if input.start <= 1 && input.end >= 1 {
+                    // n == 1 and it's included
+                    quote! {
+                        #[cfg_attr(#cfg, doc(fake_variadic))]
+                        #[cfg_attr(#cfg, doc = #doc)]
+                    }
+                } else {
+                    // n == 1 but it's not included,
+                    // only generate if #cfg
+                    quote! {
+                        #[cfg(#cfg)]
+                        #[doc(fake_variadic)]
+                        #[doc = #doc]
+                    }
                 }
             } else {
                 quote! { #[cfg_attr(#cfg, doc(hidden))] }
