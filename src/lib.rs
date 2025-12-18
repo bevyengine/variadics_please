@@ -468,8 +468,8 @@ fn choose_ident_tuples_enumerated(
     }
 }
 
-fn to_ident_tuple(idents: impl Iterator<Item = Ident>, generia_num: usize) -> TokenStream2 {
-    if generia_num < 2 {
+fn to_ident_tuple(idents: impl Iterator<Item = Ident>, generic_num: usize) -> TokenStream2 {
+    if generic_num < 2 {
         quote! { #(#idents)* }
     } else {
         quote! { (#(#idents),*) }
