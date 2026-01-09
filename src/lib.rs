@@ -28,17 +28,15 @@ impl Parse for AllTuples {
         let macro_ident = input.parse::<Ident>()?;
         input.parse::<Comma>()?;
         let start = input.parse::<LitInt>()?.base10_parse()?;
-
-        if start > 1 && fake_variadic {
-            return Err(Error::new(
-                input.span(),
-                "#[doc(fake_variadic)] only works when the tuple with length one is included",
-            ));
-        }
-
         input.parse::<Comma>()?;
+        let end_span = input.span();
         let end = input.parse::<LitInt>()?.base10_parse()?;
         input.parse::<Comma>()?;
+
+        if end < start {
+            return Err(Error::new(end_span, "`start` should <= `end`"));
+        }
+
         let mut idents = vec![input.parse::<Ident>()?];
         while input.parse::<Comma>().is_ok() {
             idents.push(input.parse::<Ident>()?);
@@ -182,13 +180,20 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            // chain n = 1
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -262,13 +267,19 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples_enumerated(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples_enumerated(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -408,13 +419,19 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let macro_ident = &input.macro_ident;
-    let invocations = (input.start..=input.end).map(|n| {
-        let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
-        let attrs = attrs(&input, n);
-        quote! {
-            #macro_ident!(#n, #attrs #ident_tuples);
-        }
-    });
+    let invocations = (input.start..=input.end)
+        .chain(if input.fake_variadic && input.start > 1 {
+            vec![1]
+        } else {
+            vec![]
+        })
+        .map(|n| {
+            let ident_tuples = choose_ident_tuples(&input, &ident_tuples, n);
+            let attrs = attrs(&input, n);
+            quote! {
+                #macro_ident!(#n, #attrs #ident_tuples);
+            }
+        });
     TokenStream::from(quote! {
         #(
             #invocations
@@ -476,8 +493,8 @@ fn choose_ident_tuples_enumerated(
     }
 }
 
-fn to_ident_tuple(idents: impl Iterator<Item = Ident>, len: usize) -> TokenStream2 {
-    if len < 2 {
+fn to_ident_tuple(idents: impl Iterator<Item = Ident>, generic_num: usize) -> TokenStream2 {
+    if generic_num < 2 {
         quote! { #(#idents)* }
     } else {
         quote! { (#(#idents),*) }
@@ -505,14 +522,43 @@ fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
             if n == 1 {
                 let doc = LitStr::new(
                     &format!(
-                        "This trait is implemented for tuples down to {} up to {} items long.",
-                        input.start, input.end
+                        "This trait is implemented for tuple{s1} {range} item{s2} long.",
+                        range = if input.start == input.end {
+                            format!("exactly {}", input.start)
+                        } else {
+                            format!(
+                                "{down}up to {up}",
+                                down = if input.start != 0 {
+                                    format!("down to {} ", input.start)
+                                } else {
+                                    "".to_string()
+                                },
+                                up = input.end
+                            )
+                        },
+                        s1 = if input.end > input.start { "s" } else { "" },
+                        s2 = if input.end >= input.start && input.end > 1 {
+                            "s"
+                        } else {
+                            ""
+                        }
                     ),
                     Span2::call_site(),
                 );
-                quote! {
-                    #[cfg_attr(#cfg, doc(fake_variadic))]
-                    #[cfg_attr(#cfg, doc = #doc)]
+                if input.start <= 1 && input.end >= 1 {
+                    // n == 1 and it's included
+                    quote! {
+                        #[cfg_attr(#cfg, doc(fake_variadic))]
+                        #[cfg_attr(#cfg, doc = #doc)]
+                    }
+                } else {
+                    // n == 1 but it's not included,
+                    // only generate if #cfg
+                    quote! {
+                        #[cfg(#cfg)]
+                        #[doc(fake_variadic)]
+                        #[doc = #doc]
+                    }
                 }
             } else {
                 quote! { #[cfg_attr(#cfg, doc(hidden))] }
