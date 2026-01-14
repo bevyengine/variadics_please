@@ -30,10 +30,10 @@ macro_rules! bar {
 // [0, 2]
 all_tuples!(bar, 0, 2, T, U);
 
+// no {3}
+
 // [4, 5]
 all_tuples!(bar, 4, 5, T, U);
-
-// no {3}
 
 #[test]
 fn basic_test() {
