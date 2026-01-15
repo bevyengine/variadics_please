@@ -24,6 +24,9 @@ syn = "2.0"
 quote = "1.0"
 proc-macro2 = "1.0"
 
+[dev-dependencies]
+static_assertions = "1.1"
+
 [workspace]
 exclude = ["benches", "compile_fail", "tools/compile_fail_utils"]
 members = ["errors", ".", "benches"]
