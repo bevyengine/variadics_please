@@ -41,6 +41,12 @@ jobs:
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
+      - uses: dtolnay/rust-toolchain@nightly
+      - name: Build & run tests with docsrs cfg
+        run: cargo test --workspace --lib --bins --tests --benches
+        env:
+          CARGO_INCREMENTAL: 0
+          RUSTFLAGS: "-C debuginfo=0 -D warnings --cfg docsrs"
 
   lint:
     runs-on: ubuntu-latest
