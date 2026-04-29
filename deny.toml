@@ -75,7 +75,7 @@ deny = [
   { name = "glam", deny-multiple-versions = true },
   { name = "raw-window-handle", deny-multiple-versions = true },
   # keep syn entirely out of tree, since we use unsynn instead
-  { name = "syn" }
+  { name = "syn" },
 ]
 
 [sources]
