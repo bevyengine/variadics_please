@@ -20,6 +20,7 @@ allow = [
   "MIT-0",
   "Unlicense",
   "Zlib",
+  "Unicode-3.0",
 ]
 
 exceptions = [
