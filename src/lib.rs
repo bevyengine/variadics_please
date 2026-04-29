@@ -9,6 +9,9 @@ use quote::quote;
 use unsynn::{format_ident, TokenStream as TokenStream2, *};
 
 unsynn! {
+    keyword KDoc = "doc";
+    keyword KFakeVariadic = "fake_variadic";
+
     // `#[doc(fake_variadic)]`
     struct FakeVariadicAttr {
         _hash: Pound, // #
@@ -17,8 +20,8 @@ unsynn! {
 
     // `doc(fake_variadic)`
     struct FakeVariadicInner {
-        _doc: Ident, // doc
-        _paren: ParenthesisGroupContaining::<Ident>,  // (fake_variadic)
+        _doc: KDoc, // doc
+        _paren: ParenthesisGroupContaining::<KFakeVariadic>,  // (fake_variadic)
     }
 }
 
@@ -33,17 +36,7 @@ struct AllTuples {
 impl Parser for AllTuples {
     fn parser(tokens: &mut TokenIter) -> Result<Self> {
         // Optional leading `#[doc(fake_variadic)]`
-        let fake_variadic = tokens
-            .transaction(|t| FakeVariadicAttr::parser(t))
-            .map(|attr| {
-                // Validate that the ident inside the parens is "fake_variadic"
-                // and the outer ident is "doc".
-                // FakeVariadicInner already encodes the structure; we just need
-                // to confirm the ident values at runtime.
-                let inner_tokens = attr._bracket.content;
-                inner_tokens._doc == "doc" && inner_tokens._paren.content == "fake_variadic"
-            })
-            .unwrap_or(false);
+        let fake_variadic = FakeVariadicAttr::parse(tokens).is_ok();
 
         // macro_ident
         let macro_ident_tok = Ident::parser(tokens)?;
