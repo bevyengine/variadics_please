@@ -14,16 +14,17 @@ unsynn! {
 
     // `#[doc(fake_variadic)]`
     struct FakeVariadicAttr {
-        _hash: Pound, // #
+        _hash: Pound,
         _bracket: BracketGroupContaining::<FakeVariadicInner>,
     }
 
     // `doc(fake_variadic)`
     struct FakeVariadicInner {
-        _doc: KDoc, // doc
-        _paren: ParenthesisGroupContaining::<KFakeVariadic>,  // (fake_variadic)
+        _doc: KDoc,
+        _paren: ParenthesisGroupContaining::<KFakeVariadic>,
     }
 
+    // `all_tuples!(#[doc(fake_variadic)] some_macro, 1, 16, P, Q, ..)`
     struct AllTuples {
         fake_variadic: Option<FakeVariadicAttr>,
         macro_ident: Ident,
