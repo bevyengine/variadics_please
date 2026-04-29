@@ -2,7 +2,7 @@
 
 // FIXME(15321): solve CI failures, then replace with `#![expect()]`.
 #![allow(missing_docs, reason = "Not all docs are written yet, see #3492.")]
-#![cfg_attr(any(docsrs, docsrs_dep), feature(doc_cfg, rustdoc_internals))]
+#![cfg_attr(any(docsrs, docsrs_dep), feature(doc_cfg))]
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -41,8 +41,7 @@ impl Parser for AllTuples {
                 // FakeVariadicInner already encodes the structure; we just need
                 // to confirm the ident values at runtime.
                 let inner_tokens = attr._bracket.content;
-                inner_tokens._doc.to_string() == "doc"
-                    && inner_tokens._paren.content.to_string() == "fake_variadic"
+                inner_tokens._doc == "doc" && inner_tokens._paren.content == "fake_variadic"
             })
             .unwrap_or(false);
 
