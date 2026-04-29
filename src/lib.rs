@@ -380,7 +380,14 @@ fn parse_all_tuples(input: TokenStream) -> Result<AllTuples> {
     let mut iter = ts.to_token_iter();
     let tuples = AllTuples::parse(&mut iter)?;
     if tuples.end < tuples.start {
-        return Error::other(None, &iter, "`start` should <= `end`".into());
+        return Error::other(
+            None,
+            &iter,
+            format!(
+                "`start` should <= `end`, but got {} > {}",
+                tuples.start, tuples.end
+            ),
+        );
     }
     Ok(tuples)
 }
