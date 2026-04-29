@@ -383,7 +383,11 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
 fn parse_all_tuples(input: TokenStream) -> Result<AllTuples> {
     let ts: TokenStream2 = input.into();
     let mut iter = ts.to_token_iter();
-    AllTuples::parse(&mut iter)
+    let tuples = AllTuples::parse(&mut iter)?;
+    if tuples.end < tuples.start {
+        return Error::other(None, &iter, "`start` should <= `end`".into());
+    }
+    Ok(tuples)
 }
 
 fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
