@@ -3,6 +3,10 @@
 // FIXME(15321): solve CI failures, then replace with `#![expect()]`.
 #![allow(missing_docs, reason = "Not all docs are written yet, see #3492.")]
 #![cfg_attr(any(docsrs, docsrs_dep), feature(doc_cfg))]
+#![expect(
+    clippy::result_large_err,
+    reason = "The error variant intentionally holds detailed diagnostic information."
+)]
 
 use proc_macro::TokenStream;
 use quote::quote;
