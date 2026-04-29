@@ -12,18 +12,6 @@ unsynn! {
     keyword KDoc = "doc";
     keyword KFakeVariadic = "fake_variadic";
 
-    // `#[doc(fake_variadic)]`
-    struct FakeVariadicAttr {
-        _hash: Pound,
-        _bracket: BracketGroupContaining::<FakeVariadicInner>,
-    }
-
-    // `doc(fake_variadic)`
-    struct FakeVariadicInner {
-        _doc: KDoc,
-        _paren: ParenthesisGroupContaining::<KFakeVariadic>,
-    }
-
     // `all_tuples!(#[doc(fake_variadic)] some_macro, 1, 16, P, Q, ..)`
     struct AllTuples {
         fake_variadic: Option<FakeVariadicAttr>,
@@ -34,6 +22,12 @@ unsynn! {
         end: usize,
         _comma3: Comma,
         idents: CommaDelimitedVec<Ident>,
+    }
+
+    // `#[doc(fake_variadic)]`
+    struct FakeVariadicAttr {
+        _hash: Pound,
+        _bracket: BracketGroupContaining::<(KDoc, ParenthesisGroupContaining::<KFakeVariadic>)>,
     }
 }
 
@@ -474,7 +468,7 @@ fn to_ident_tuple_enumerated(idents: impl Iterator<Item = Ident>, idx: usize) ->
 
 /// n: number of elements
 fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
-    if !input.fake_variadic.is_some() {
+    if input.fake_variadic.is_none() {
         return TokenStream2::default();
     }
     match n {
