@@ -23,68 +23,16 @@ unsynn! {
         _doc: KDoc, // doc
         _paren: ParenthesisGroupContaining::<KFakeVariadic>,  // (fake_variadic)
     }
-}
 
-struct AllTuples {
-    fake_variadic: bool,
-    macro_ident: Ident,
-    start: usize,
-    end: usize,
-    idents: Vec<Ident>,
-}
-
-impl Parser for AllTuples {
-    fn parser(tokens: &mut TokenIter) -> Result<Self> {
-        // Optional leading `#[doc(fake_variadic)]`
-        let fake_variadic = FakeVariadicAttr::parse(tokens).is_ok();
-
-        // macro_ident
-        let macro_ident_tok = Ident::parser(tokens)?;
-        let macro_ident = Ident::new(&macro_ident_tok.to_string(), Span::call_site());
-
-        // `,`
-        Comma::parser(tokens)?;
-
-        // start
-        let start_tok = LiteralInteger::parser(tokens)?;
-        let start_tt = start_tok.to_token_iter().next();
-        let start: usize = start_tok.value().try_into().map_err(|_| {
-            Error::other::<usize>(start_tt, tokens, "start out of range".into()).unwrap_err()
-        })?;
-
-        // `,`
-        Comma::parser(tokens)?;
-
-        // end
-        let end_tok = LiteralInteger::parser(tokens)?;
-        let end_tt = end_tok.to_token_iter().next();
-        let end: usize = end_tok.value().try_into().map_err(|_| {
-            Error::other::<usize>(end_tt.clone(), tokens, "end out of range".into()).unwrap_err()
-        })?;
-
-        if end < start {
-            return Error::other(end_tt, tokens, "`start` should <= `end`".into());
-        }
-
-        // `,`
-        Comma::parser(tokens)?;
-
-        // one or more idents separated by commas
-        let first_tok = Ident::parser(tokens)?;
-        let mut idents = vec![Ident::new(&first_tok.to_string(), Span::call_site())];
-
-        while tokens.transaction(|t| Comma::parser(t)).is_ok() {
-            let tok = Ident::parser(tokens)?;
-            idents.push(Ident::new(&tok.to_string(), Span::call_site()));
-        }
-
-        Ok(AllTuples {
-            fake_variadic,
-            macro_ident,
-            start,
-            end,
-            idents,
-        })
+    struct AllTuples {
+        fake_variadic: Option<FakeVariadicAttr>,
+        macro_ident: Ident,
+        _comma1: Comma,
+        start: usize,
+        _comma2: Comma,
+        end: usize,
+        _comma3: Comma,
+        idents: CommaDelimitedVec<Ident>,
     }
 }
 
@@ -435,7 +383,7 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
 fn parse_all_tuples(input: TokenStream) -> Result<AllTuples> {
     let ts: TokenStream2 = input.into();
     let mut iter = ts.to_token_iter();
-    AllTuples::parser(&mut iter)
+    AllTuples::parse(&mut iter)
 }
 
 fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
@@ -444,7 +392,7 @@ fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
             let idents = input
                 .idents
                 .iter()
-                .map(|ident| format_ident!("{}{}", ident, i));
+                .map(|ident| format_ident!("{}{}", ident.value, i));
             to_ident_tuple(idents, input.idents.len())
         })
         .collect()
@@ -456,7 +404,7 @@ fn build_ident_tuples_enumerated(input: &AllTuples) -> Vec<TokenStream2> {
             let idents = input
                 .idents
                 .iter()
-                .map(|ident| format_ident!("{}{}", ident, i));
+                .map(|ident| format_ident!("{}{}", ident.value, i));
             to_ident_tuple_enumerated(idents, i)
         })
         .collect()
@@ -465,7 +413,7 @@ fn build_ident_tuples_enumerated(input: &AllTuples) -> Vec<TokenStream2> {
 /// Returns an iterator over the invocation arities, including the optional fake-variadic `n=1`.
 fn make_invocation_range(input: &AllTuples) -> impl Iterator<Item = usize> {
     let base = input.start..=input.end;
-    let extra: Vec<usize> = if input.fake_variadic && input.start > 1 {
+    let extra: Vec<usize> = if input.fake_variadic.is_some() && input.start > 1 {
         vec![1]
     } else {
         vec![]
@@ -478,8 +426,11 @@ fn choose_ident_tuples(input: &AllTuples, ident_tuples: &[TokenStream2], n: usiz
     // idents with subscript numbers e.g. (F₁, F₂, …, Fₙ).
     // We don't want two numbers, so we use the
     // original, unnumbered idents for this case.
-    if input.fake_variadic && n == 1 {
-        let ident_tuple = to_ident_tuple(input.idents.iter().cloned(), input.idents.len());
+    if input.fake_variadic.is_some() && n == 1 {
+        let ident_tuple = to_ident_tuple(
+            input.idents.iter().map(|ident| &ident.value).cloned(),
+            input.idents.len(),
+        );
         quote! { #ident_tuple }
     } else {
         let ident_tuples = &ident_tuples[..n];
@@ -492,8 +443,9 @@ fn choose_ident_tuples_enumerated(
     ident_tuples: &[TokenStream2],
     n: usize,
 ) -> TokenStream2 {
-    if input.fake_variadic && n == 1 {
-        let ident_tuple = to_ident_tuple_enumerated(input.idents.iter().cloned(), 0);
+    if input.fake_variadic.is_some() && n == 1 {
+        let ident_tuple =
+            to_ident_tuple_enumerated(input.idents.iter().map(|ident| &ident.value).cloned(), 0);
         quote! { #ident_tuple }
     } else {
         let ident_tuples = &ident_tuples[..n];
@@ -517,7 +469,7 @@ fn to_ident_tuple_enumerated(idents: impl Iterator<Item = Ident>, idx: usize) ->
 
 /// n: number of elements
 fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
-    if !input.fake_variadic {
+    if !input.fake_variadic.is_some() {
         return TokenStream2::default();
     }
     match n {
