@@ -384,8 +384,9 @@ fn parse_all_tuples(input: TokenStream) -> Result<AllTuples> {
     let mut iter = ts.to_token_iter();
     let tuples = AllTuples::parse(&mut iter)?;
     if tuples.end < tuples.start {
+        let at = tuples.macro_ident.to_token_iter().next();
         return Error::other(
-            None,
+            at,
             &iter,
             format!(
                 "`start` should <= `end`, but got {} > {}",
