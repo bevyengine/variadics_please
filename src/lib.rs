@@ -429,8 +429,8 @@ fn pretty_print_error(err: Error) -> TokenStream {
         ErrorKind::UnexpectedToken => format!("expected {}", err.expected_type_name()),
         _ => err.to_string(),
     };
-    let ts = TokenStream2::from(quote::quote_spanned! { span => compile_error!(#msg); });
-    return ts.into();
+    let ts = quote::quote_spanned! { span => compile_error!(#msg); };
+    ts.into()
 }
 
 fn span_error(tokens: impl ToTokens, msg: &str) -> TokenStream {
@@ -440,8 +440,8 @@ fn span_error(tokens: impl ToTokens, msg: &str) -> TokenStream {
         .map(|tt| tt.span())
         .unwrap_or_else(Span::call_site);
     let msg = format!("expected {}", msg);
-    let ts = TokenStream2::from(quote::quote_spanned! { span => compile_error!(#msg); });
-    return ts.into();
+    let ts = quote::quote_spanned! { span => compile_error!(#msg); };
+    ts.into()
 }
 
 fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
