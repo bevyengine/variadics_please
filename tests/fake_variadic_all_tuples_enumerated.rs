@@ -21,7 +21,9 @@ all_tuples_enumerated!(
     T
 );
 
-all_tuples_enumerated!(/*no attribute here, since it's added before*/ foo, 4, 5, T);
+all_tuples_enumerated!(
+    /*no attribute here, since it's added before*/ foo, 4, 5, T
+);
 
 trait Bar {}
 
@@ -41,7 +43,9 @@ all_tuples_enumerated!(
     U
 );
 
-all_tuples_enumerated!(/*no attribute here, since it's added before*/ bar, 4, 5, T, U);
+all_tuples_enumerated!(
+    /*no attribute here, since it's added before*/ bar, 4, 5, T, U
+);
 
 trait Baz {}
 
