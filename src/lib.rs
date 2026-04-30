@@ -408,7 +408,7 @@ fn parse_all_tuples(input: TokenStream) -> std::result::Result<AllTuples, TokenS
         }
     };
     if end < start {
-        return Err(span_error(tuples.start, "`start` should <= `end`"));
+        return Err(span_error(tuples.end, "`start` should <= `end`"));
     }
     Ok(AllTuples {
         fake_variadic: tuples.fake_variadic.is_some(),
