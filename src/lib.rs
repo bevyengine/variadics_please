@@ -3,6 +3,7 @@
 // FIXME(15321): solve CI failures, then replace with `#![expect()]`.
 #![allow(missing_docs, reason = "Not all docs are written yet, see #3492.")]
 #![cfg_attr(any(docsrs, docsrs_dep), feature(doc_cfg))]
+// This lint is triggered from inside the `unsynn!` macro, so we are forced to suppress it for the entire module.
 #![expect(
     clippy::result_large_err,
     reason = "The error variant intentionally holds detailed diagnostic information."
@@ -419,6 +420,8 @@ fn parse_all_tuples(input: TokenStream) -> std::result::Result<AllTuples, TokenS
     })
 }
 
+/// Unfortunately there's no upstream pretty-printing in `unsynn` yet:
+/// <https://seed.pipapo.org/nodes/seed.pipapo.org/rad:z39WbeupErKS8TwbDS5yU8eZSa3C/issues/960feccb89aef6452b5ec0a6ce6a00604c8d8d21>
 fn pretty_print_error(err: Error) -> TokenStream {
     let span = err
         .failed_at()
