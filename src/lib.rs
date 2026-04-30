@@ -11,7 +11,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use unsynn::{format_ident, TokenStream as TokenStream2, *};
+use unsynn::{TokenStream as TokenStream2, format_ident, *};
 
 unsynn! {
     keyword KDoc = "doc";
