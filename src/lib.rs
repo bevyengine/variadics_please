@@ -17,13 +17,13 @@ unsynn! {
     keyword KFakeVariadic = "fake_variadic";
 
     // `all_tuples!(#[doc(fake_variadic)] some_macro, 1, 16, P, Q, ..)`
-    struct AllTuples {
+    struct AllTuplesParsed {
         fake_variadic: Option<FakeVariadicAttr>,
         macro_ident: Ident,
         _comma1: Comma,
-        start: usize,
+        start: LiteralInteger,
         _comma2: Comma,
-        end: usize,
+        end: LiteralInteger,
         _comma3: Comma,
         idents: CommaDelimitedVec<Ident>,
     }
@@ -33,6 +33,14 @@ unsynn! {
         _hash: Pound,
         _bracket: BracketGroupContaining::<(KDoc, ParenthesisGroupContaining::<KFakeVariadic>)>,
     }
+}
+
+struct AllTuples {
+    fake_variadic: bool,
+    macro_ident: Ident,
+    start: usize,
+    end: usize,
+    idents: Vec<Ident>,
 }
 
 /// Helper macro to generate tuple pyramids. Useful to generate scaffolding to work around Rust
@@ -155,8 +163,7 @@ pub fn all_tuples(input: TokenStream) -> TokenStream {
     let input = match parse_all_tuples(input) {
         Ok(input) => input,
         Err(err) => {
-            let msg = err.to_string();
-            return TokenStream::from(quote! { compile_error!(#msg) });
+            return err;
         }
     };
     let ident_tuples = build_ident_tuples(&input);
@@ -227,8 +234,7 @@ pub fn all_tuples_enumerated(input: TokenStream) -> TokenStream {
     let input = match parse_all_tuples(input) {
         Ok(input) => input,
         Err(err) => {
-            let msg = err.to_string();
-            return TokenStream::from(quote! { compile_error!(#msg) });
+            return err;
         }
     };
     let ident_tuples = build_ident_tuples_enumerated(&input);
@@ -365,8 +371,7 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
     let input = match parse_all_tuples(input) {
         Ok(input) => input,
         Err(err) => {
-            let msg = err.to_string();
-            return TokenStream::from(quote! { compile_error!(#msg) });
+            return err;
         }
     };
     let ident_tuples = build_ident_tuples(&input);
@@ -379,22 +384,63 @@ pub fn all_tuples_with_size(input: TokenStream) -> TokenStream {
     TokenStream::from(quote! { #(#invocations)* })
 }
 
-fn parse_all_tuples(input: TokenStream) -> Result<AllTuples> {
+fn parse_all_tuples(input: TokenStream) -> std::result::Result<AllTuples, TokenStream> {
     let ts: TokenStream2 = input.into();
     let mut iter = ts.to_token_iter();
-    let tuples = AllTuples::parse(&mut iter)?;
-    if tuples.end < tuples.start {
-        let at = tuples.macro_ident.to_token_iter().next();
-        return Error::other(
-            at,
-            &iter,
-            format!(
-                "`start` should <= `end`, but got {} > {}",
-                tuples.start, tuples.end
-            ),
-        );
+    let tuples = AllTuplesParsed::parse(&mut iter).map_err(pretty_print_error)?;
+    let start: usize = match tuples.start.value().try_into() {
+        Ok(start) => start,
+        Err(_) => {
+            return Err(span_error(
+                tuples.start,
+                "`start` should be in the range of 0..usize::MAX",
+            ));
+        }
+    };
+    let end: usize = match tuples.end.value().try_into() {
+        Ok(end) => end,
+        Err(_) => {
+            return Err(span_error(
+                tuples.end,
+                "`end` should be in the range of 0..usize::MAX",
+            ));
+        }
+    };
+    if end < start {
+        return Err(span_error(tuples.start, "`start` should <= `end`"));
     }
-    Ok(tuples)
+    Ok(AllTuples {
+        fake_variadic: tuples.fake_variadic.is_some(),
+        macro_ident: tuples.macro_ident,
+        start,
+        end,
+        idents: tuples.idents.iter().map(|i| i.value.clone()).collect(),
+    })
+}
+
+fn pretty_print_error(err: Error) -> TokenStream {
+    let span = err
+        .failed_at()
+        .map(|tt| tt.span())
+        .unwrap_or_else(Span::call_site);
+
+    let msg = match err.kind {
+        ErrorKind::Other { reason } => reason,
+        _ => err.to_string(),
+    };
+    let ts = TokenStream2::from(quote::quote_spanned! { span => compile_error!(#msg); });
+    return ts.into();
+}
+
+fn span_error(tokens: impl ToTokens, msg: &str) -> TokenStream {
+    let span = tokens
+        .to_token_iter()
+        .next()
+        .map(|tt| tt.span())
+        .unwrap_or_else(Span::call_site);
+    let msg = format!("expected {}", msg);
+    let ts = TokenStream2::from(quote::quote_spanned! { span => compile_error!(#msg); });
+    return ts.into();
 }
 
 fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
@@ -403,7 +449,7 @@ fn build_ident_tuples(input: &AllTuples) -> Vec<TokenStream2> {
             let idents = input
                 .idents
                 .iter()
-                .map(|ident| format_ident!("{}{}", ident.value, i));
+                .map(|ident| format_ident!("{}{}", ident, i));
             to_ident_tuple(idents, input.idents.len())
         })
         .collect()
@@ -415,7 +461,7 @@ fn build_ident_tuples_enumerated(input: &AllTuples) -> Vec<TokenStream2> {
             let idents = input
                 .idents
                 .iter()
-                .map(|ident| format_ident!("{}{}", ident.value, i));
+                .map(|ident| format_ident!("{}{}", ident, i));
             to_ident_tuple_enumerated(idents, i)
         })
         .collect()
@@ -424,7 +470,7 @@ fn build_ident_tuples_enumerated(input: &AllTuples) -> Vec<TokenStream2> {
 /// Returns an iterator over the invocation arities, including the optional fake-variadic `n=1`.
 fn make_invocation_range(input: &AllTuples) -> impl Iterator<Item = usize> {
     let base = input.start..=input.end;
-    let extra: Vec<usize> = if input.fake_variadic.is_some() && input.start > 1 {
+    let extra: Vec<usize> = if input.fake_variadic && input.start > 1 {
         vec![1]
     } else {
         vec![]
@@ -437,11 +483,8 @@ fn choose_ident_tuples(input: &AllTuples, ident_tuples: &[TokenStream2], n: usiz
     // idents with subscript numbers e.g. (F₁, F₂, …, Fₙ).
     // We don't want two numbers, so we use the
     // original, unnumbered idents for this case.
-    if input.fake_variadic.is_some() && n == 1 {
-        let ident_tuple = to_ident_tuple(
-            input.idents.iter().map(|ident| &ident.value).cloned(),
-            input.idents.len(),
-        );
+    if input.fake_variadic && n == 1 {
+        let ident_tuple = to_ident_tuple(input.idents.iter().cloned(), input.idents.len());
         quote! { #ident_tuple }
     } else {
         let ident_tuples = &ident_tuples[..n];
@@ -454,9 +497,8 @@ fn choose_ident_tuples_enumerated(
     ident_tuples: &[TokenStream2],
     n: usize,
 ) -> TokenStream2 {
-    if input.fake_variadic.is_some() && n == 1 {
-        let ident_tuple =
-            to_ident_tuple_enumerated(input.idents.iter().map(|ident| &ident.value).cloned(), 0);
+    if input.fake_variadic && n == 1 {
+        let ident_tuple = to_ident_tuple_enumerated(input.idents.iter().cloned(), 0);
         quote! { #ident_tuple }
     } else {
         let ident_tuples = &ident_tuples[..n];
@@ -480,7 +522,7 @@ fn to_ident_tuple_enumerated(idents: impl Iterator<Item = Ident>, idx: usize) ->
 
 /// n: number of elements
 fn attrs(input: &AllTuples, n: usize) -> TokenStream2 {
-    if input.fake_variadic.is_none() {
+    if !input.fake_variadic {
         return TokenStream2::default();
     }
     match n {
