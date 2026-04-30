@@ -426,6 +426,7 @@ fn pretty_print_error(err: Error) -> TokenStream {
 
     let msg = match err.kind {
         ErrorKind::Other { reason } => reason,
+        ErrorKind::UnexpectedToken => format!("expected {}", err.expected_type_name()),
         _ => err.to_string(),
     };
     let ts = TokenStream2::from(quote::quote_spanned! { span => compile_error!(#msg); });
