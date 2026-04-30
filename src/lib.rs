@@ -16,7 +16,7 @@ unsynn! {
     keyword KDoc = "doc";
     keyword KFakeVariadic = "fake_variadic";
 
-    // `all_tuples!(#[doc(fake_variadic)] some_macro, 1, 16, P, Q, ..)`
+    /// `all_tuples!(#[doc(fake_variadic)] some_macro, 1, 16, P, Q, ..)`
     struct AllTuplesParsed {
         fake_variadic: Option<FakeVariadicAttr>,
         macro_ident: Ident,
@@ -28,13 +28,14 @@ unsynn! {
         idents: CommaDelimitedVec<Ident>,
     }
 
-    // `#[doc(fake_variadic)]`
+    /// `#[doc(fake_variadic)]`
     struct FakeVariadicAttr {
         _hash: Pound,
         _bracket: BracketGroupContaining::<(KDoc, ParenthesisGroupContaining::<KFakeVariadic>)>,
     }
 }
 
+/// Duplication of [`AllTuplesParsed`], but after it went through validation.
 struct AllTuples {
     fake_variadic: bool,
     macro_ident: Ident,
